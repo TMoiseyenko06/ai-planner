@@ -1,0 +1,13 @@
+services:
+  focus:
+    build: .
+    ports:
+      - "80:80"
+    volumes:
+      - focus_data:/data
+    env_file:
+      - .env
+    restart: unless-stopped
+
+volumes:
+  focus_data:
