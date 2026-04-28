@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Context, List } from "../types/task";
+import { Context, List, Task } from "../types/task";
 
 export function useOrganizeDump(refreshTasks: () => Promise<void>) {
   const [loading, setLoading] = useState(false);
@@ -8,16 +8,33 @@ export function useOrganizeDump(refreshTasks: () => Promise<void>) {
   const organize = async (
     text: string,
     context?: Context | null,
-    list?: List
+    list?: List,
+    existingTasks?: Task[]
   ): Promise<boolean> => {
     setLoading(true);
     setError(null);
+
+    // Send compact representation to keep payload small
+    const compact = existingTasks?.map((t) => ({
+      id: t.id,
+      title: t.title,
+      bucket: t.bucket,
+      scheduled_date: t.scheduled_date,
+      context: t.context,
+      estimated_minutes: t.estimated_minutes,
+      note: t.note,
+    }));
 
     try {
       const res = await fetch("/api/organize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, context, list: list ?? "personal" }),
+        body: JSON.stringify({
+          text,
+          context,
+          list: list ?? "personal",
+          existingTasks: compact ?? [],
+        }),
       });
 
       if (!res.ok) throw new Error("organize failed");

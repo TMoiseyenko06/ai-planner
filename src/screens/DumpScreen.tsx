@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Context, List } from "../types/task";
+import { Context, List, Task } from "../types/task";
 import BottomNav from "../components/BottomNav";
 import ListToggle from "../components/ListToggle";
 import { useOrganizeDump } from "../hooks/useOrganizeDump";
-import { formatRelativeTime } from "../utils/dateHelpers";
+import { formatRelativeTime, getNext7Days } from "../utils/dateHelpers";
 
 interface RawDump {
   id: string;
@@ -36,9 +36,10 @@ const CONTEXTS: { value: Context; label: string }[] = [
 interface Props {
   refreshTasks: () => Promise<void>;
   activeList: List;
+  tasks: Task[];
 }
 
-export default function DumpScreen({ refreshTasks, activeList }: Props) {
+export default function DumpScreen({ refreshTasks, activeList, tasks }: Props) {
   const navigate = useNavigate();
   const { organize, loading, error, setError } = useOrganizeDump(refreshTasks);
 
@@ -52,9 +53,22 @@ export default function DumpScreen({ refreshTasks, activeList }: Props) {
     saveDumps(dumps);
   };
 
+  const upcomingTasks = (() => {
+    const next7 = new Set(getNext7Days());
+    const now = new Date();
+    return tasks.filter((t) => {
+      if (t.completed) return false;
+      if ((t.list ?? "personal") !== selectedList) return false;
+      if (t.snoozed_until && new Date(t.snoozed_until) > now) return false;
+      if (t.scheduled_date && next7.has(t.scheduled_date)) return true;
+      if (!t.scheduled_date) return true; // unscheduled active tasks
+      return false;
+    });
+  })();
+
   const handleOrganize = async () => {
     if (!text.trim()) return;
-    const ok = await organize(text.trim(), selectedContext, selectedList);
+    const ok = await organize(text.trim(), selectedContext, selectedList, upcomingTasks);
     if (ok) {
       setText("");
       setSelectedContext(null);
@@ -77,7 +91,7 @@ export default function DumpScreen({ refreshTasks, activeList }: Props) {
   };
 
   const handleOrganizeDump = async (dump: RawDump) => {
-    const ok = await organize(dump.text, dump.context, dump.list);
+    const ok = await organize(dump.text, dump.context, dump.list, upcomingTasks);
     if (ok) {
       updateDumps(rawDumps.filter((d) => d.id !== dump.id));
     }
@@ -96,6 +110,12 @@ export default function DumpScreen({ refreshTasks, activeList }: Props) {
       <ListToggle value={selectedList} onChange={setSelectedList} />
 
       <div className="px-4">
+        {upcomingTasks.length > 0 && (
+          <p className="text-xs text-brand-gray mb-3">
+            AI will see your {upcomingTasks.length} active {selectedList} task{upcomingTasks.length !== 1 ? "s" : ""} and can edit or remove them.
+          </p>
+        )}
+
         <textarea
           value={text}
           onChange={(e) => {

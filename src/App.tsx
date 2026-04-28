@@ -44,7 +44,11 @@ export default function App() {
         <Route
           path="/dump"
           element={
-            <DumpScreen refreshTasks={refreshTasks} activeList={activeList} />
+            <DumpScreen
+              refreshTasks={refreshTasks}
+              activeList={activeList}
+              tasks={tasks}
+            />
           }
         />
         <Route
