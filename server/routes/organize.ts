@@ -48,7 +48,8 @@ Each object in "create" must have:
 - context: "home" | "desk" | "phone" | "errand" | "other"
 - estimated_minutes: number or null
 - steps: string[] — 2–4 sub-steps if complex, otherwise []
-- note: string or null`
+- note: string or null
+- energy: "low" | "medium" | "high" — mental effort required (low = routine/automatic, medium = needs focus, high = deep concentration)`
     : `You are a task organizer for someone with ADHD.
 Today's date is ${today}.
 
@@ -62,7 +63,8 @@ Each item in the array must have exactly these fields:
 - context: "home" | "desk" | "phone" | "errand" | "other"
 - estimated_minutes: number or null
 - steps: string[] — 2–4 sub-steps if complex, otherwise []
-- note: string or null`;
+- note: string or null
+- energy: "low" | "medium" | "high" — mental effort required (low = routine/automatic, medium = needs focus, high = deep concentration)`;
 
   const userMessage = hasExisting
     ? `CURRENT TASKS:\n${JSON.stringify(existingTasks, null, 2)}\n\nBRAIN DUMP:\n${text}`
@@ -164,6 +166,9 @@ Each item in the array must have exactly these fields:
           steps: Array.isArray(patch.steps)
             ? (patch.steps as unknown[]).map(String)
             : t.steps,
+          energy: (["low", "medium", "high"].includes(String(patch.energy))
+            ? patch.energy
+            : t.energy) as Task["energy"],
         };
       });
 
@@ -189,6 +194,9 @@ Each item in the array must have exactly these fields:
           ? (item.steps as unknown[]).map(String)
           : [],
         note: typeof item.note === "string" ? item.note : null,
+        energy: (["low", "medium", "high"].includes(String(item.energy))
+          ? item.energy
+          : undefined) as Task["energy"],
         list: taskList,
         completed: false,
         completed_at: null,

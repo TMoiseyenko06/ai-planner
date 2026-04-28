@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Task } from "../types/task";
 import ContextTag from "./ContextTag";
+import EnergyTag from "./EnergyTag";
 import { formatMinutes, formatTime } from "../utils/dateHelpers";
 
 interface Props {
@@ -27,9 +28,7 @@ export default function TaskRow({
           }}
           aria-label={isDone ? "Completed" : "Complete task"}
           className={`w-6 h-6 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
-            isDone
-              ? "bg-brand-green border-brand-green"
-              : "border-brand-gray"
+            isDone ? "bg-brand-green border-brand-green" : "border-brand-gray"
           }`}
         >
           {isDone && (
@@ -58,11 +57,14 @@ export default function TaskRow({
         >
           {task.title}
         </span>
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-1.5 flex-shrink-0">
           {showCompletedTime && task.completed_at && (
             <span className="text-xs text-brand-gray">
               {formatTime(task.completed_at)}
             </span>
+          )}
+          {task.energy && !showCompletedTime && (
+            <EnergyTag energy={task.energy} />
           )}
           {task.estimated_minutes !== null && !showCompletedTime && (
             <span className="text-xs text-brand-gray font-medium bg-brand-gray-light rounded-full px-2 py-0.5">

@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Task } from "../types/task";
 import ContextTag from "./ContextTag";
+import EnergyTag from "./EnergyTag";
 import { formatMinutes } from "../utils/dateHelpers";
 
 interface Props {
@@ -25,6 +26,7 @@ export default function TaskCard({ task, onComplete }: Props) {
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-2">
             <ContextTag context={task.context} />
+            {task.energy && <EnergyTag energy={task.energy} />}
             {task.estimated_minutes !== null && (
               <span className="text-xs text-brand-coral font-semibold">
                 {formatMinutes(task.estimated_minutes)}

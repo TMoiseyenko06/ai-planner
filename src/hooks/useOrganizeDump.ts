@@ -22,6 +22,7 @@ export function useOrganizeDump(refreshTasks: () => Promise<void>) {
       scheduled_date: t.scheduled_date,
       context: t.context,
       estimated_minutes: t.estimated_minutes,
+      energy: t.energy,
       note: t.note,
     }));
 

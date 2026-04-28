@@ -6,6 +6,7 @@ import path from "path";
 import tasksRouter from "./routes/tasks";
 import organizeRouter from "./routes/organize";
 import logsRouter from "./routes/logs";
+import suggestStepsRouter from "./routes/suggestSteps";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 80;
@@ -28,6 +29,7 @@ app.use(express.static(path.join(__dirname, "../dist")));
 
 app.use("/api/tasks", tasksRouter);
 app.use("/api", organizeRouter);
+app.use("/api", suggestStepsRouter);
 app.use("/api/logs", logsRouter);
 
 app.get("*", (_req, res) => {
