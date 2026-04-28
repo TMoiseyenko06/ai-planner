@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Context } from "../types/task";
+import { Context, List } from "../types/task";
 import BottomNav from "../components/BottomNav";
+import ListToggle from "../components/ListToggle";
 import { useOrganizeDump } from "../hooks/useOrganizeDump";
 import { formatRelativeTime } from "../utils/dateHelpers";
 
@@ -9,6 +10,7 @@ interface RawDump {
   id: string;
   text: string;
   context: Context | null;
+  list: List;
   capturedAt: string;
 }
 
@@ -33,14 +35,16 @@ const CONTEXTS: { value: Context; label: string }[] = [
 
 interface Props {
   refreshTasks: () => Promise<void>;
+  activeList: List;
 }
 
-export default function DumpScreen({ refreshTasks }: Props) {
+export default function DumpScreen({ refreshTasks, activeList }: Props) {
   const navigate = useNavigate();
   const { organize, loading, error, setError } = useOrganizeDump(refreshTasks);
 
   const [text, setText] = useState("");
   const [selectedContext, setSelectedContext] = useState<Context | null>(null);
+  const [selectedList, setSelectedList] = useState<List>(activeList);
   const [rawDumps, setRawDumps] = useState<RawDump[]>(loadDumps);
 
   const updateDumps = (dumps: RawDump[]) => {
@@ -50,7 +54,7 @@ export default function DumpScreen({ refreshTasks }: Props) {
 
   const handleOrganize = async () => {
     if (!text.trim()) return;
-    const ok = await organize(text.trim(), selectedContext);
+    const ok = await organize(text.trim(), selectedContext, selectedList);
     if (ok) {
       setText("");
       setSelectedContext(null);
@@ -64,6 +68,7 @@ export default function DumpScreen({ refreshTasks }: Props) {
       id: crypto.randomUUID(),
       text: text.trim(),
       context: selectedContext,
+      list: selectedList,
       capturedAt: new Date().toISOString(),
     };
     updateDumps([...rawDumps, dump]);
@@ -72,7 +77,7 @@ export default function DumpScreen({ refreshTasks }: Props) {
   };
 
   const handleOrganizeDump = async (dump: RawDump) => {
-    const ok = await organize(dump.text, dump.context);
+    const ok = await organize(dump.text, dump.context, dump.list);
     if (ok) {
       updateDumps(rawDumps.filter((d) => d.id !== dump.id));
     }
@@ -87,6 +92,8 @@ export default function DumpScreen({ refreshTasks }: Props) {
       <header className="px-4 pt-8 pb-4">
         <h1 className="text-2xl font-bold text-gray-900">Brain Dump</h1>
       </header>
+
+      <ListToggle value={selectedList} onChange={setSelectedList} />
 
       <div className="px-4">
         <textarea
@@ -153,7 +160,7 @@ export default function DumpScreen({ refreshTasks }: Props) {
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-2 h-2 rounded-full bg-brand-amber flex-shrink-0" />
                     <span className="text-xs text-brand-amber font-medium">
-                      not sorted yet &middot; captured{" "}
+                      {dump.list} &middot; not sorted yet &middot; captured{" "}
                       {formatRelativeTime(dump.capturedAt)}
                     </span>
                   </div>

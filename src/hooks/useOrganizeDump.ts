@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Context } from "../types/task";
+import { Context, List } from "../types/task";
 
 export function useOrganizeDump(refreshTasks: () => Promise<void>) {
   const [loading, setLoading] = useState(false);
@@ -7,7 +7,8 @@ export function useOrganizeDump(refreshTasks: () => Promise<void>) {
 
   const organize = async (
     text: string,
-    context?: Context | null
+    context?: Context | null,
+    list?: List
   ): Promise<boolean> => {
     setLoading(true);
     setError(null);
@@ -16,7 +17,7 @@ export function useOrganizeDump(refreshTasks: () => Promise<void>) {
       const res = await fetch("/api/organize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, context }),
+        body: JSON.stringify({ text, context, list: list ?? "personal" }),
       });
 
       if (!res.ok) throw new Error("organize failed");

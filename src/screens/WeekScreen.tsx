@@ -1,20 +1,17 @@
 import { useNavigate } from "react-router-dom";
-import { Task } from "../types/task";
+import { Task, List } from "../types/task";
 import ContextTag from "../components/ContextTag";
 import BottomNav from "../components/BottomNav";
+import ListToggle from "../components/ListToggle";
 import { getNext7Days, getDayLabel, formatMinutes } from "../utils/dateHelpers";
 
 interface Props {
   tasks: Task[];
+  activeList: List;
+  onChangeList: (list: List) => void;
 }
 
-function WeekTaskItem({
-  task,
-  onClick,
-}: {
-  task: Task;
-  onClick: () => void;
-}) {
+function WeekTaskItem({ task, onClick }: { task: Task; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
@@ -35,14 +32,16 @@ function WeekTaskItem({
   );
 }
 
-export default function WeekScreen({ tasks }: Props) {
+export default function WeekScreen({ tasks, activeList, onChangeList }: Props) {
   const navigate = useNavigate();
   const days = getNext7Days();
   const today = days[0];
 
-  const activeTasks = tasks.filter((t) => !t.completed);
-  const scheduled = activeTasks.filter((t) => t.scheduled_date !== null);
-  const unscheduled = activeTasks.filter((t) => t.scheduled_date === null);
+  const listTasks = tasks.filter(
+    (t) => !t.completed && (t.list ?? "personal") === activeList
+  );
+  const scheduled = listTasks.filter((t) => t.scheduled_date !== null);
+  const unscheduled = listTasks.filter((t) => t.scheduled_date === null);
 
   const tasksByDay = (day: string) =>
     scheduled.filter((t) => t.scheduled_date === day);
@@ -52,6 +51,8 @@ export default function WeekScreen({ tasks }: Props) {
       <header className="px-4 pt-8 pb-4">
         <h1 className="text-2xl font-bold text-gray-900">Week</h1>
       </header>
+
+      <ListToggle value={activeList} onChange={onChangeList} />
 
       <div className="overflow-x-auto pb-4">
         <div
@@ -65,9 +66,7 @@ export default function WeekScreen({ tasks }: Props) {
               <div key={day} className="w-40 flex-shrink-0">
                 <div
                   className={`text-center mb-3 pb-2 border-b ${
-                    isToday
-                      ? "border-brand-purple"
-                      : "border-gray-100"
+                    isToday ? "border-brand-purple" : "border-gray-100"
                   }`}
                 >
                   <p
@@ -87,9 +86,7 @@ export default function WeekScreen({ tasks }: Props) {
                     />
                   ))
                 ) : (
-                  <p className="text-xs text-brand-gray/50 text-center mt-4">
-                    —
-                  </p>
+                  <p className="text-xs text-brand-gray/50 text-center mt-4">—</p>
                 )}
               </div>
             );

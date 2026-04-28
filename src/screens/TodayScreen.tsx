@@ -1,17 +1,25 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Task } from "../types/task";
+import { Task, List } from "../types/task";
 import { resolveEffectiveBucket } from "../utils/bucketResolver";
 import TaskCard from "../components/TaskCard";
 import TaskRow from "../components/TaskRow";
 import BottomNav from "../components/BottomNav";
+import ListToggle from "../components/ListToggle";
 
 interface Props {
   tasks: Task[];
   patchTask: (id: string, patch: Partial<Task>) => Promise<void>;
+  activeList: List;
+  onChangeList: (list: List) => void;
 }
 
-export default function TodayScreen({ tasks, patchTask }: Props) {
+export default function TodayScreen({
+  tasks,
+  patchTask,
+  activeList,
+  onChangeList,
+}: Props) {
   const navigate = useNavigate();
   const [doneExpanded, setDoneExpanded] = useState(false);
 
@@ -21,17 +29,18 @@ export default function TodayScreen({ tasks, patchTask }: Props) {
   const complete = (id: string) =>
     patchTask(id, { completed: true, completed_at: new Date().toISOString() });
 
-  const activeTasks = tasks.filter((t) => {
+  const listTasks = tasks.filter(
+    (t) => (t.list ?? "personal") === activeList
+  );
+
+  const activeTasks = listTasks.filter((t) => {
     if (t.completed) return false;
     if (t.snoozed_until && new Date(t.snoozed_until) > now) return false;
     return true;
   });
 
-  const doneTodayTasks = tasks.filter(
-    (t) =>
-      t.completed &&
-      t.completed_at &&
-      t.completed_at.startsWith(today)
+  const doneTodayTasks = listTasks.filter(
+    (t) => t.completed && t.completed_at && t.completed_at.startsWith(today)
   );
 
   const nowTasks = activeTasks.filter(
@@ -70,6 +79,8 @@ export default function TodayScreen({ tasks, patchTask }: Props) {
           </svg>
         </button>
       </header>
+
+      <ListToggle value={activeList} onChange={onChangeList} />
 
       {nowTasks.length > 0 && (
         <section className="px-4 mb-6">
@@ -135,11 +146,7 @@ export default function TodayScreen({ tasks, patchTask }: Props) {
           </button>
           {doneExpanded &&
             doneTodayTasks.map((task) => (
-              <TaskRow
-                key={task.id}
-                task={task}
-                showCompletedTime
-              />
+              <TaskRow key={task.id} task={task} showCompletedTime />
             ))}
         </section>
       )}

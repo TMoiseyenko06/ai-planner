@@ -1,19 +1,26 @@
-import { Task } from "../types/task";
+import { Task, List } from "../types/task";
 import ContextTag from "../components/ContextTag";
 import BottomNav from "../components/BottomNav";
+import ListToggle from "../components/ListToggle";
 import { formatDate, formatTime } from "../utils/dateHelpers";
 
 interface Props {
   tasks: Task[];
+  activeList: List;
+  onChangeList: (list: List) => void;
 }
 
-export default function DoneScreen({ tasks }: Props) {
+export default function DoneScreen({ tasks, activeList, onChangeList }: Props) {
   const doneTasks = tasks
-    .filter((t) => t.completed && t.completed_at)
+    .filter(
+      (t) =>
+        t.completed &&
+        t.completed_at &&
+        (t.list ?? "personal") === activeList
+    )
     .sort(
       (a, b) =>
-        new Date(b.completed_at!).getTime() -
-        new Date(a.completed_at!).getTime()
+        new Date(b.completed_at!).getTime() - new Date(a.completed_at!).getTime()
     );
 
   const grouped = doneTasks.reduce<Record<string, Task[]>>((acc, task) => {
@@ -31,8 +38,10 @@ export default function DoneScreen({ tasks }: Props) {
         <h1 className="text-2xl font-bold text-gray-900">Done</h1>
       </header>
 
+      <ListToggle value={activeList} onChange={onChangeList} />
+
       {days.length === 0 && (
-        <div className="flex flex-col items-center justify-center pt-24 px-8 text-center">
+        <div className="flex flex-col items-center justify-center pt-16 px-8 text-center">
           <p className="text-2xl font-bold text-gray-200">Nothing yet</p>
           <p className="text-sm text-brand-gray mt-2">
             Completed tasks show up here.
@@ -51,17 +60,11 @@ export default function DoneScreen({ tasks }: Props) {
                 <div
                   key={task.id}
                   className={`flex items-center gap-3 px-4 py-3 ${
-                    idx < grouped[day].length - 1
-                      ? "border-b border-gray-100"
-                      : ""
+                    idx < grouped[day].length - 1 ? "border-b border-gray-100" : ""
                   }`}
                 >
                   <div className="w-5 h-5 rounded-full bg-brand-green flex-shrink-0 flex items-center justify-center">
-                    <svg
-                      className="w-3 h-3 text-white"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
+                    <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none">
                       <path
                         d="M2 6l3 3 5-5"
                         stroke="currentColor"

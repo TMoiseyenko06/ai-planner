@@ -5,7 +5,9 @@ import { Task } from "../types";
 const router = Router();
 
 router.post("/organize", async (req: Request, res: Response) => {
-  const { text } = req.body;
+  const { text, list } = req.body;
+  const taskList: "work" | "personal" =
+    list === "work" || list === "personal" ? list : "personal";
 
   if (!text || typeof text !== "string" || !text.trim()) {
     res.status(400).json({ error: "text is required" });
@@ -110,6 +112,7 @@ Each item in the array must have exactly these fields:
         ? (item.steps as unknown[]).map(String)
         : [],
       note: typeof item.note === "string" ? item.note : null,
+      list: taskList,
       completed: false,
       completed_at: null,
       created_at: new Date().toISOString(),
