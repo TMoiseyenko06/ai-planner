@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Task } from "../types/task";
 import { resolveEffectiveBucket } from "../utils/bucketResolver";
 import TaskCard from "../components/TaskCard";
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export default function TodayScreen({ tasks, patchTask }: Props) {
+  const navigate = useNavigate();
   const [doneExpanded, setDoneExpanded] = useState(false);
 
   const today = new Date().toISOString().split("T")[0];
@@ -52,9 +54,21 @@ export default function TodayScreen({ tasks, patchTask }: Props) {
 
   return (
     <div className="min-h-screen pb-20">
-      <header className="px-4 pt-8 pb-4">
-        <h1 className="text-2xl font-bold text-gray-900">Today</h1>
-        <p className="text-sm text-brand-gray mt-0.5">{dateLabel}</p>
+      <header className="px-4 pt-8 pb-4 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Today</h1>
+          <p className="text-sm text-brand-gray mt-0.5">{dateLabel}</p>
+        </div>
+        <button
+          onClick={() => navigate("/logs")}
+          aria-label="View logs"
+          className="p-2 -mr-1 text-brand-gray/40 rounded-xl active:bg-brand-gray-light active:text-brand-gray"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M7 8h10M7 12h10M7 16h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </button>
       </header>
 
       {nowTasks.length > 0 && (

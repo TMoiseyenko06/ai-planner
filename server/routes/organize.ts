@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { readTasks, writeTasks } from "../data";
+import { log } from "../logger";
 import { Task } from "../types";
 
 const router = Router();
@@ -33,6 +34,8 @@ Each item in the array must have exactly these fields:
 - steps: string[] — 2 to 4 sub-steps if the task is complex, otherwise empty array
 - note: string or null — any context worth remembering about why this task exists`;
 
+  log("info", "Organize request received", { chars: text.length });
+
   try {
     const response = await fetch(
       "https://openrouter.ai/api/v1/chat/completions",
@@ -54,12 +57,22 @@ Each item in the array must have exactly these fields:
     );
 
     if (!response.ok) {
+      const body = await response.text().catch(() => "");
+      log("error", `OpenRouter HTTP ${response.status}`, { body });
       throw new Error(`OpenRouter error: ${response.status}`);
     }
 
     const data = await response.json();
     const content = data.choices[0].message.content;
-    const raw = JSON.parse(content);
+
+    let raw: unknown;
+    try {
+      raw = JSON.parse(content);
+    } catch (parseErr) {
+      log("error", "Failed to parse OpenRouter JSON response", { content, parseErr });
+      throw parseErr;
+    }
+
     const items: unknown[] = Array.isArray(raw)
       ? raw
       : (raw as { tasks?: unknown[] }).tasks ?? [];
@@ -94,8 +107,11 @@ Each item in the array must have exactly these fields:
     const existing = readTasks();
     writeTasks([...existing, ...tasks]);
 
+    log("info", `Organized ${tasks.length} task(s) from dump`);
     res.json(tasks);
-  } catch (_err) {
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    log("error", "Organize failed", { message });
     res.status(500).json({ error: "organize failed" });
   }
 });

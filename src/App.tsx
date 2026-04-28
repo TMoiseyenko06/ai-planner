@@ -5,6 +5,7 @@ import FocusScreen from "./screens/FocusScreen";
 import DumpScreen from "./screens/DumpScreen";
 import WeekScreen from "./screens/WeekScreen";
 import DoneScreen from "./screens/DoneScreen";
+import LogsScreen from "./screens/LogsScreen";
 
 export default function App() {
   const { tasks, patchTask, refreshTasks } = useTasks();
@@ -26,6 +27,7 @@ export default function App() {
         />
         <Route path="/week" element={<WeekScreen tasks={tasks} />} />
         <Route path="/done" element={<DoneScreen tasks={tasks} />} />
+        <Route path="/logs" element={<LogsScreen />} />
       </Routes>
     </BrowserRouter>
   );
