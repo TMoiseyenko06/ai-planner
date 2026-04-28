@@ -1,37 +1,42 @@
-export type LogLevel = "info" | "warn" | "error";
+const MAX_LINES = 1000;
+const lines: string[] = [];
 
-export interface LogEntry {
-  id: string;
-  timestamp: string;
-  level: LogLevel;
-  message: string;
-  data?: unknown;
+function addLine(text: string): void {
+  const stripped = text.replace(/\n$/, "");
+  if (!stripped) return;
+  const ts = new Date().toISOString().replace("T", " ").slice(0, 23);
+  for (const line of stripped.split("\n")) {
+    if (line.trim()) lines.push(`${ts}  ${line}`);
+  }
+  while (lines.length > MAX_LINES) lines.shift();
 }
 
-const MAX = 500;
-const buffer: LogEntry[] = [];
-
-export function log(level: LogLevel, message: string, data?: unknown): void {
-  const entry: LogEntry = {
-    id: crypto.randomUUID(),
-    timestamp: new Date().toISOString(),
-    level,
-    message,
-    data,
-  };
-  buffer.push(entry);
-  if (buffer.length > MAX) buffer.shift();
-
-  const prefix = `[${level.toUpperCase()}]`;
-  if (level === "error") console.error(prefix, message, data ?? "");
-  else if (level === "warn") console.warn(prefix, message, data ?? "");
-  else console.log(prefix, message, data ?? "");
+export function startCapture(): void {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function tap(stream: NodeJS.WriteStream): void {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const orig = (stream.write as any).bind(stream);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (stream as any).write = (...args: any[]): boolean => {
+      const chunk = args[0];
+      const text =
+        typeof chunk === "string"
+          ? chunk
+          : Buffer.isBuffer(chunk)
+          ? chunk.toString("utf8")
+          : "";
+      addLine(text);
+      return orig(...args);
+    };
+  }
+  tap(process.stdout);
+  tap(process.stderr);
 }
 
-export function getLogs(): LogEntry[] {
-  return [...buffer].reverse();
+export function getLogs(): string[] {
+  return [...lines].reverse();
 }
 
 export function clearLogs(): void {
-  buffer.length = 0;
+  lines.length = 0;
 }

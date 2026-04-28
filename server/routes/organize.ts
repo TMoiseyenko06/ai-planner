@@ -1,6 +1,5 @@
 import { Router, Request, Response } from "express";
 import { readTasks, writeTasks } from "../data";
-import { log } from "../logger";
 import { Task } from "../types";
 
 const router = Router();
@@ -34,7 +33,7 @@ Each item in the array must have exactly these fields:
 - steps: string[] — 2 to 4 sub-steps if the task is complex, otherwise empty array
 - note: string or null — any context worth remembering about why this task exists`;
 
-  log("info", "Organize request received", { chars: text.length });
+  console.log(`[INFO ] Organize: sending ${text.length} chars to OpenRouter`);
 
   try {
     const response = await fetch(
@@ -57,19 +56,20 @@ Each item in the array must have exactly these fields:
     );
 
     if (!response.ok) {
-      const body = await response.text().catch(() => "");
-      log("error", `OpenRouter HTTP ${response.status}`, { body });
-      throw new Error(`OpenRouter error: ${response.status}`);
+      const body = await response.text().catch(() => "(unreadable)");
+      console.error(`[ERROR] OpenRouter HTTP ${response.status}: ${body}`);
+      throw new Error(`OpenRouter HTTP ${response.status}`);
     }
 
     const data = await response.json();
-    const content = data.choices[0].message.content;
+    const content: string = data.choices[0].message.content;
 
     let raw: unknown;
     try {
       raw = JSON.parse(content);
     } catch (parseErr) {
-      log("error", "Failed to parse OpenRouter JSON response", { content, parseErr });
+      console.error(`[ERROR] JSON parse failed. Raw content: ${content}`);
+      console.error(`[ERROR] Parse error: ${String(parseErr)}`);
       throw parseErr;
     }
 
@@ -107,11 +107,11 @@ Each item in the array must have exactly these fields:
     const existing = readTasks();
     writeTasks([...existing, ...tasks]);
 
-    log("info", `Organized ${tasks.length} task(s) from dump`);
+    console.log(`[INFO ] Organize: created ${tasks.length} task(s)`);
     res.json(tasks);
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    log("error", "Organize failed", { message });
+    const msg = err instanceof Error ? `${err.message}\n${err.stack ?? ""}` : String(err);
+    console.error(`[ERROR] Organize failed: ${msg}`);
     res.status(500).json({ error: "organize failed" });
   }
 });
